@@ -53,7 +53,7 @@
 <body>
 
     <div id="chat-container">
-        <div id="chat-header">สำรวจความคิดเห็นสร้าง AI สำนักทะเบียน</div>
+        <div id="chat-header">แบบสำรวจความคิดเห็น</div>
         <div id="chat-box"></div>
         <div id="input-area">
             <input type="text" id="user-input" placeholder="พิมพ์ข้อความ..." onkeypress="handleKeyPress(event)">
@@ -180,21 +180,35 @@ let tempFeedback = "";
 
 function submitToGoogleForm(userType, feedback) {
     const formURL = "https://docs.google.com/forms/d/e/1FAIpQLSdRmZApkq3iVhuQE65mla9LAelSzQtEMcD7QtTTf3nXvpSOKQ/formResponse";
-    
     const params = new URLSearchParams();
     params.append("entry.1079308243", userType); 
     params.append("entry.1712032602", feedback); 
-
     fetch(formURL, {
         method: "POST",
         mode: "no-cors",
         body: params
-    }).catch(err => console.error("Error sending data:", err));
+    }).catch(err => console.error(err));
 }
 
 window.onload = async () => {
+    const lastSubmitTime = localStorage.getItem("regAiLastSubmit");
+    if (lastSubmitTime) {
+        const timePassed = Date.now() - parseInt(lastSubmitTime);
+        const cooldown = 2 * 60 * 1000; 
+        if (timePassed < cooldown) {
+            const minutesLeft = Math.ceil((cooldown - timePassed) / 60000);
+            document.getElementById("user-input").disabled = true;
+            document.getElementById("user-input").placeholder = "พักแป๊บนึงน้า...";
+            await sendBotMessages([
+                "ขอบคุณสำหรับความคิดเห็นมากๆ เลยจ้า!",
+                `แต่ระบบตรวจพบว่าคุณเพิ่งตอบไป รบกวนรออีกประมาณ ${minutesLeft} นาที แล้วค่อยกลับมาใหม่น้า`
+            ]);
+            return; 
+        }
+    }
+
     await sendBotMessages([
-        "สวัสดีจ้า วันนี้ขอสอบถามความคิดเห็นและข้อเสนอแนะหน่อยนะ",
+        "สวัสดีจ้า ฉันคือน้องบอท ทำหน้าที่มาเก็บความคิดเห็น",
         "ตอนนี้สำนักทะเบียนกำลังจะทำ AI เลยอยากฟังความคิดเห็นของคุณว่า อยากให้ AI เป็นแบบไหน หรือช่วยทำอะไรได้บ้าง",
         "ก่อนอื่น คุณเป็นคนกลุ่มไหน พิมพ์เลขบอกหน่อยนะ",
         "พิมพ์ 1 นักศึกษาใหม่ <br> พิมพ์ 2 นักศึกษาปัจจุบัน <br> พิมพ์ 3 ศิษย์เก่า"
@@ -206,7 +220,6 @@ async function botBrainLogic(userInput) {
         if (userInput === "1" || userInput === "2" || userInput === "3") {
             let greeting1 = "";
             let greeting2 = "";
-
             if (userInput === "1") {
                 surveyData.userType = "นักศึกษาใหม่";
                 greeting1 = "น้องใหม่นี่เอง";
@@ -220,9 +233,7 @@ async function botBrainLogic(userInput) {
                 greeting1 = "สวัสดีจ้า";
                 greeting2 = "คุณพี่ศิษย์เก่า";
             }
-            
             currentStep = 1;
-            
             await sendBotMessages([
                 greeting1,
                 greeting2,
@@ -242,7 +253,6 @@ async function botBrainLogic(userInput) {
         } else {
             tempFeedback = userInput;
             currentStep = 1.5; 
-
             await sendBotMessages([
                 `ขอทวนนะ ความคิดเห็นของคุณคือ "${tempFeedback}" ถูกไหมเอ่ย`,
                 `พิมพ์แค่ "ใช่" เพื่อยืนยัน หรือพิมพ์ข้อเสนอมาใหม่ได้เลยจ้า`
@@ -251,22 +261,18 @@ async function botBrainLogic(userInput) {
     } 
     else if (currentStep === 1.5) {
         const confirmText = userInput.trim(); 
-        
         if (confirmText === "ใช่") {
             surveyData.feedback = tempFeedback;
             currentStep = 2; 
-            
             submitToGoogleForm(surveyData.userType, surveyData.feedback);
-            
+            localStorage.setItem("regAiLastSubmit", Date.now().toString());
             await sendBotMessages([
                 "จดความคิดเห็นเรียบร้อย!",
-                "น้องบอทขอบคุณมาก ๆ นะ",
+                "ต้องขอบคุณมาก ๆ นะ",
                 "ข้อมูลนี้จะเป็นประโยชน์ในการสร้าง AI ของเราจ้า"
             ]);
-            
             document.getElementById("user-input").disabled = true;
             document.getElementById("user-input").placeholder = "จบการสนทนาแล้วจ้า";
-            
         } else {
             if (userInput.length <= 8) {
                 await sendBotMessages([
@@ -274,7 +280,6 @@ async function botBrainLogic(userInput) {
                 ]);
             } else {
                 tempFeedback = userInput;
-                
                 await sendBotMessages([
                     `อัปเดตข้อมูลแล้วจ้า ขอทวนนะ ความคิดเห็นของคุณคือ "${tempFeedback}" ถูกไหมเอ่ย`,
                     `พิมพ์แค่ "ใช่" เพื่อยืนยัน หรือพิมพ์แก้มาใหม่ได้เลยจ้า`
