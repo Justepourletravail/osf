@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>แบบสำรวจ AI สำนักทะเบียน</title>
+    <title>REG Bot Requirment Chat</title>
     <style>
         html, body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; height: 100%; overflow: hidden; background-color: #f0f2f5; }
         #chat-container { 
@@ -208,8 +208,8 @@ window.onload = async () => {
     }
 
     await sendBotMessages([
-        "สวัสดีจ้า ฉันคือน้องบอท มาทำหน้าที่เก็บความคิดเห็น",
-        "ตอนนี้สำนักทะเบียนกำลังจะทำ AI เลยอยากฟังความคิดเห็นของคุณว่า อยากให้ AI เป็นแบบไหน หรือช่วยทำอะไรได้บ้าง",
+        "สวัสดีจ้า ฉันคือน้อง Bot มาทำหน้าที่เก็บความคิดเห็น",
+        "ตอนนี้สำนักทะเบียนกำลังจะทำ Bot เลยอยากฟังความคิดเห็นของคุณว่า อยากให้ Bot เป็นแบบไหน หรือช่วยทำอะไรได้บ้าง",
         "ก่อนอื่น คุณเป็นคนกลุ่มไหน พิมพ์เลขบอกหน่อยนะ",
         "พิมพ์ 1 นักศึกษาใหม่ (รหัส 69) <br> พิมพ์ 2 นักศึกษาปัจจุบัน <br> พิมพ์ 3 ศิษย์เก่า"
     ]);
@@ -222,22 +222,22 @@ async function botBrainLogic(userInput) {
             let greeting2 = "";
             if (userInput === "1") {
                 surveyData.userType = "นักศึกษาใหม่ (รหัส 69)";
-                greeting1 = "อ้าว น้องใหม่นี่เอง";
+                greeting1 = "Hi Hi!";
                 greeting2 = "ยินดีต้อนรับสู่รั้วธรรมศาสตร์นะ";
             } else if (userInput === "2") {
                 surveyData.userType = "นักศึกษาปัจจุบัน";
-                greeting1 = "นศ. ปัจจุบันนี่เอง";
+                greeting1 = "Hey bro!";
                 greeting2 = "สู้ๆ กับการเรียนนะ";
             } else if (userInput === "3") {
                 surveyData.userType = "ศิษย์เก่า";
-                greeting1 = "สวัสดีจ้า";
-                greeting2 = "คุณพี่ศิษย์เก่า";
+                greeting1 = "อ๋อจ้า";
+                greeting2 = "คุณพี่";
             }
             currentStep = 1;
             await sendBotMessages([
                 greeting1,
                 greeting2,
-                "ถ้าสำนักทะเบียนมี AI อยากให้ AI เป็นแบบไหน ตอบคำถามอะไร หรือช่วยเหลืออะไรได้บ้าง พิมพ์ความคิดเห็นมาได้เลยนะ"
+                "เข้าเรื่องเลยน้า หากสำนักงานทะเบียนนักศึกษาจะทำ REG Bot คุณอยากให้ REG Bot ของเราช่วยอะไร ฝากความเห็น/คำถามไว้ได้เลยนะ"
             ]);
         } else {
             await sendBotMessages([
