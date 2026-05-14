@@ -216,6 +216,23 @@ window.onload = async () => {
 };
 
 async function botBrainLogic(userInput) {
+	const badWords = [
+        "เหี้ย", "สัส", "สัตว์", "เย็ด", "ควย", "แตด", "แม่ง", "ดอกทอง",
+        "ตอแหล", "แรด", "กะหรี่", "สวะ", "ระยำ", "จัญไร", "ควาย", "อีดอก",
+        "ส้นตีน", "หน้าโง่", "ไอ้โง่", "อีโง่", "เสือก", "อีควาย", "ไอ้ควาย", "อีห่า", "ไอ้",
+        "พ่อตาย", "แม่ตาย", "พ่อง", "ชิบหาย", "ค.ว.ย", "ค.ว.ย.", "Bitch", "Fuck","bitch", "fuck"
+    ];
+
+    const isRude = badWords.some(word => userInput.includes(word));
+
+    if (isRude) {
+        await sendBotMessages([
+            "ห้ามพูดคำหยาบ!",
+			"พิมพ์ดี ๆ"
+        ]);
+        return;
+    }
+	
     if (currentStep === 0) {
         if (userInput === "1" || userInput === "2" || userInput === "3") {
             let greeting1 = "";
@@ -261,6 +278,7 @@ async function botBrainLogic(userInput) {
     } 
     else if (currentStep === 1.5) {
         const confirmText = userInput.trim(); 
+        
         if (confirmText === "ใช่") {
             surveyData.feedback = tempFeedback;
             currentStep = 2; 
@@ -268,6 +286,7 @@ async function botBrainLogic(userInput) {
             localStorage.setItem("regAiLastSubmit", Date.now().toString());
             await sendBotMessages([
                 "จดความคิดเห็นเรียบร้อย!",
+                `ความคิดเห็นของคุณคือ "${tempFeedback}"`,
                 "ต้องขอบคุณมาก ๆ นะ",
                 "ข้อมูลนี้จะเป็นประโยชน์ในการพัฒนา Bot ของเราจ้า",
                 "หากคุณอยากแสดงความเห็นเพิ่มเติม รอ 2 นาที แล้ว Refresh Chat ใหม่น้า"
@@ -277,13 +296,14 @@ async function botBrainLogic(userInput) {
         } else {
             if (userInput.length <= 8) {
                 await sendBotMessages([
-                    "ความคิดเห็นสั้นไปนิดนึงน้า ลองพิมพ์อธิบายเพิ่มอีกหน่อยจ้า"
+                    `ถ้าต้องการยืนยันความเห็นเดิม พิมพ์แค่คำว่า "ใช่" คำเดียวนะจ๊ะ`,
+                    "แต่ถ้าตั้งใจจะแก้ความเห็นใหม่ ข้อความเมื่อกี้ยังสั้นไปนิดนึง รบกวนพิมพ์อธิบายเพิ่มให้อีกหน่อยจ้า"
                 ]);
             } else {
                 tempFeedback = userInput;
                 await sendBotMessages([
                     `อัปเดตข้อมูลแล้วจ้า ขอทวนนะ ความคิดเห็นของคุณคือ "${tempFeedback}" ถูกไหมเอ่ย`,
-                    `พิมพ์แค่ "ใช่" เพื่อยืนยัน หรือพิมพ์แก้มาใหม่ได้เลยจ้า`
+                    `พิมพ์แค่ "ใช่" คำเดียวเพื่อยืนยัน หรือพิมพ์แก้มาใหม่ได้เลยจ้า`
                 ]);
             }
         }
