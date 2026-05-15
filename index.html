@@ -41,6 +41,10 @@
         .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
         @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
 
+        .options-container { display: flex; flex-wrap: wrap; gap: 8px; max-width: 75%; margin-top: 4px; }
+        .chat-option-btn { background: #ffffff; color: #1a365d; border: 1.5px solid #1a365d; padding: 8px 14px; border-radius: 18px; cursor: pointer; font-size: 13.5px; font-weight: 600; transition: all 0.2s; outline: none; }
+        .chat-option-btn:hover { background: #1a365d; color: #ffffff; }
+
         #input-area { display: flex; padding: 12px; background: #f8fafc; border-top: 1px solid #e2e8f0; }
         #user-input { flex: 1; padding: 12px 16px; border: 1px solid #cbd5e0; background-color: #ffffff; border-radius: 20px; outline: none; font-size: 14px; transition: border-color 0.2s; }
         #user-input:focus { border-color: #1a365d; }
@@ -101,6 +105,9 @@ async function handleUserSubmit() {
     const messageText = inputField.value.trim();
     if (messageText === "") return;
 
+    const activeOptions = document.getElementById("active-options");
+    if (activeOptions) activeOptions.remove();
+
     appendUserMessage(messageText);
     inputField.value = ""; 
     inputField.disabled = true;
@@ -113,6 +120,38 @@ async function handleUserSubmit() {
 
 function handleKeyPress(event) {
     if (event.key === "Enter") handleUserSubmit();
+}
+
+function showOptions(options) {
+    const chatBox = document.getElementById("chat-box");
+    
+    const row = document.createElement("div");
+    row.id = "active-options";
+    row.className = "message-row bot-row";
+    
+    const picPlaceholder = document.createElement("div");
+    picPlaceholder.className = "profile-pic hide-pic";
+    row.appendChild(picPlaceholder);
+
+    const btnContainer = document.createElement("div");
+    btnContainer.className = "options-container";
+    
+    options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.className = "chat-option-btn";
+        btn.innerText = opt.label;
+        btn.onclick = () => {
+            document.getElementById("active-options").remove();
+            const inputField = document.getElementById("user-input");
+            inputField.value = opt.value;
+            handleUserSubmit();
+        };
+        btnContainer.appendChild(btn);
+    });
+    
+    row.appendChild(btnContainer);
+    chatBox.appendChild(row);
+    chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 async function sendBotMessages(messagesArray) {
@@ -211,6 +250,10 @@ window.onload = async () => {
         "สวัสดีจ้า! Please select your language / กรุณาเลือกภาษา",
         "พิมพ์ TH สำหรับภาษาไทย <br> Type EN for English"
     ]);
+    showOptions([
+        {label: "ภาษาไทย", value: "TH"},
+        {label: "English", value: "EN"}
+    ]);
 };
 
 async function botBrainLogic(userInput) {
@@ -240,15 +283,27 @@ async function botBrainLogic(userInput) {
         
         if (currentStep === -1) {
             await sendBotMessages(["พิมพ์ TH สำหรับภาษาไทย <br> Type EN for English"]);
+            showOptions([
+                {label: "ภาษาไทย", value: "TH"},
+                {label: "English", value: "EN"}
+            ]);
         } else if (currentStep === 0) {
             let msg = currentLang === "EN" ? "Which group do you belong to? Type 1, 2, or 3." : "สรุปว่าคุณเป็นคนกลุ่มไหน พิมพ์เลข 1, 2 หรือ 3 มาใหม่นะ";
             await sendBotMessages([msg]);
+            showOptions([
+                {label: currentLang === "EN" ? "1. New Student" : "1. นักศึกษาใหม่", value: "1"},
+                {label: currentLang === "EN" ? "2. Current Student" : "2. นักศึกษาปัจจุบัน", value: "2"},
+                {label: currentLang === "EN" ? "3. Alumni" : "3. ศิษย์เก่า", value: "3"}
+            ]);
         } else if (currentStep === 1) {
             let msg = currentLang === "EN" ? "Please type nicely." : "พิมพ์ดี ๆ";
             await sendBotMessages([msg]);
         } else if (currentStep === 1.5) {
             let msg = currentLang === "EN" ? `Just type "Yes" to confirm, or type your new feedback.` : `พิมพ์แค่ "ใช่" เพื่อยืนยัน หรือพิมพ์แก้ความเห็นมาใหม่`;
             await sendBotMessages([msg]);
+            showOptions([
+                {label: currentLang === "EN" ? "YES" : "ใช่", value: currentLang === "EN" ? "YES" : "ใช่"}
+            ]);
         }
         
         return;
@@ -269,6 +324,11 @@ async function botBrainLogic(userInput) {
                     "ก่อนอื่น คุณเป็นคนกลุ่มไหน พิมพ์เลขบอกหน่อยนะ",
                     "พิมพ์ 1 นักศึกษาใหม่ (รหัส 69) <br> พิมพ์ 2 นักศึกษาปัจจุบัน <br> พิมพ์ 3 ศิษย์เก่า"
                 ]);
+                showOptions([
+                    {label: "1. นักศึกษาใหม่ (รหัส 69)", value: "1"},
+                    {label: "2. นักศึกษาปัจจุบัน", value: "2"},
+                    {label: "3. ศิษย์เก่า", value: "3"}
+                ]);
             } else {
                 await sendBotMessages([
                     "Hi there! I'm the REG Bot, here to collect your feedback.",
@@ -276,10 +336,19 @@ async function botBrainLogic(userInput) {
                     "First off, which group do you belong to? Just type the number.",
                     "Type 1 for New Student (ID 69) <br> Type 2 for Current Student <br> Type 3 for Alumni"
                 ]);
+                showOptions([
+                    {label: "1. New Student (ID 69)", value: "1"},
+                    {label: "2. Current Student", value: "2"},
+                    {label: "3. Alumni", value: "3"}
+                ]);
             }
         } else {
             await sendBotMessages([
                 "กรุณาพิมพ์ TH หรือ EN เท่านั้นจ้า / Please type TH or EN only."
+            ]);
+            showOptions([
+                {label: "ภาษาไทย", value: "TH"},
+                {label: "English", value: "EN"}
             ]);
         }
     }
@@ -315,6 +384,11 @@ async function botBrainLogic(userInput) {
         } else {
             let errorMsg = currentLang === "EN" ? "Please type only the number 1, 2, or 3. Let's try again!" : "ขอเป็นตัวเลข 1, 2 หรือ 3 เท่านั้นจ้า ลองพิมพ์ใหม่นะ";
             await sendBotMessages([errorMsg]);
+            showOptions([
+                {label: currentLang === "EN" ? "1. New Student" : "1. นักศึกษาใหม่", value: "1"},
+                {label: currentLang === "EN" ? "2. Current Student" : "2. นักศึกษาปัจจุบัน", value: "2"},
+                {label: currentLang === "EN" ? "3. Alumni" : "3. ศิษย์เก่า", value: "3"}
+            ]);
         }
     } 
     else if (currentStep === 1) {
@@ -329,6 +403,9 @@ async function botBrainLogic(userInput) {
             let confirm2 = currentLang === "EN" ? `Just type "Yes" to confirm, or type your new ideas here!` : `พิมพ์แค่ "ใช่" เพื่อยืนยัน หรือพิมพ์ข้อเสนอมาใหม่ได้เลยจ้า`;
 
             await sendBotMessages([confirm1, confirm2]);
+            showOptions([
+                {label: currentLang === "EN" ? "YES" : "ใช่", value: currentLang === "EN" ? "YES" : "ใช่"}
+            ]);
         }
     } 
     else if (currentStep === 1.5) {
@@ -357,6 +434,9 @@ async function botBrainLogic(userInput) {
                 let fail1 = currentLang === "EN" ? `If you want to confirm your previous feedback, just type the word "Yes".` : `ถ้าต้องการยืนยันความเห็นเดิม พิมพ์แค่คำว่า "ใช่" คำเดียวนะจ๊ะ`;
                 let fail2 = currentLang === "EN" ? "But if you meant to change your feedback, your previous message was a bit too short. Please type a little more to explain!" : "แต่ถ้าตั้งใจจะแก้ความเห็นใหม่ ข้อความเมื่อกี้ยังสั้นไปนิดนึง รบกวนพิมพ์อธิบายเพิ่มให้อีกหน่อยจ้า";
                 await sendBotMessages([fail1, fail2]);
+                showOptions([
+                    {label: currentLang === "EN" ? "YES" : "ใช่", value: currentLang === "EN" ? "YES" : "ใช่"}
+                ]);
             } else {
                 tempFeedback = userInput;
                 
@@ -364,6 +444,9 @@ async function botBrainLogic(userInput) {
                 let update2 = currentLang === "EN" ? `Just type "Yes" to confirm, or type your new ideas here!` : `พิมพ์แค่ "ใช่" คำเดียวเพื่อยืนยัน หรือพิมพ์แก้มาใหม่ได้เลยจ้า`;
                 
                 await sendBotMessages([update1, update2]);
+                showOptions([
+                    {label: currentLang === "EN" ? "YES" : "ใช่", value: currentLang === "EN" ? "YES" : "ใช่"}
+                ]);
             }
         }
     }
