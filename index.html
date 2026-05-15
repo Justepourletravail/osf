@@ -19,8 +19,6 @@
         
         #chat-header { background: #1a365d; color: white; padding: 16px; text-align: center; font-size: 1.1em; font-weight: bold; }
         
-        #chat-header { background: #1a365d; color: white; padding: 16px; text-align: center; font-size: 1.1em; font-weight: bold; }
-        
         #chat-box { flex: 1; padding: 20px 16px; overflow-y: auto; display: flex; flex-direction: column; background-color: #ffffff; }
         
         .message-row { display: flex; align-items: flex-start; margin-bottom: 2px; }
@@ -174,7 +172,8 @@ function appendUserMessage(text) {
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-let currentStep = 0;
+let currentStep = -1;
+let currentLang = "";
 const surveyData = {};
 let tempFeedback = "";
 let profanityCount = 0;
@@ -199,25 +198,23 @@ window.onload = async () => {
         if (timePassed < cooldown) {
             const minutesLeft = Math.ceil((cooldown - timePassed) / 60000);
             document.getElementById("user-input").disabled = true;
-            document.getElementById("user-input").placeholder = "พักแป๊บนึงน้า...";
+            document.getElementById("user-input").placeholder = "พักแป๊บนึงน้า... / Please wait...";
             await sendBotMessages([
-                "ขอบคุณสำหรับความคิดเห็นมากๆ เลยจ้า!",
-                `แต่ระบบตรวจพบว่าคุณเพิ่งตอบไป รบกวนรออีกประมาณ ${minutesLeft} นาที แล้วค่อยกลับมาใหม่น้า`
+                "ขอบคุณสำหรับความคิดเห็นมากๆ เลยจ้า! / Thank you so much for your feedback!",
+                `แต่ระบบตรวจพบว่าคุณเพิ่งตอบไป รบกวนรออีกประมาณ ${minutesLeft} นาที แล้วค่อยกลับมาใหม่น้า / Please wait about ${minutesLeft} minutes before submitting again!`
             ]);
             return; 
         }
     }
 
     await sendBotMessages([
-        "สวัสดีจ้า ฉันคือน้อง Bot มาทำหน้าที่เก็บความคิดเห็น",
-        "ตอนนี้สำนักทะเบียนกำลังจะทำ Bot เลยอยากฟังความคิดเห็นของคุณว่า อยากให้ Bot เป็นแบบไหน หรือช่วยทำอะไรได้บ้าง",
-        "ก่อนอื่น คุณเป็นคนกลุ่มไหน พิมพ์เลขบอกหน่อยนะ",
-        "พิมพ์ 1 นักศึกษาใหม่ (รหัส 69) <br> พิมพ์ 2 นักศึกษาปัจจุบัน <br> พิมพ์ 3 ศิษย์เก่า"
+        "สวัสดีจ้า! Please select your language / กรุณาเลือกภาษา",
+        "พิมพ์ TH สำหรับภาษาไทย <br> Type EN for English"
     ]);
 };
 
 async function botBrainLogic(userInput) {
-	const badWords = [
+    const badWords = [
         "เหี้ย", "สัส", "เย็ด", "ควย", "แตด", "ดอกทอง",
         "ตอแหล", "แรด", "กะหรี่", "สวะ", "ระยำ", "จัญไร", "ควาย", "อีดอก",
         "ส้นตีน", "หน้าโง่", "ไอ้โง่", "อีโง่", "เสือก", "อีควาย", "ไอ้ควาย", "อีห่า",
@@ -228,105 +225,145 @@ async function botBrainLogic(userInput) {
 
     if (isRude) {
         profanityCount++;
+        
+        let warn1 = currentLang === "EN" ? "No bad words allowed!" : "ห้ามพูดคำหยาบ!";
+        let warn2 = currentLang === "EN" ? "Stop! Please don't use bad words." : "หยุดนะ! อย่าพูดคำหยาบ";
+        let warn3 = "😡😡😡";
+
         if (profanityCount === 1) {
-            await sendBotMessages([
-                "ห้ามพูดคำหยาบ!"
-            ]);
+            await sendBotMessages([warn1]);
         } else if (profanityCount === 2) {
-            await sendBotMessages([
-                "หยุดนะ! อย่าพูดคำหยาบ"
-            ]);
+            await sendBotMessages([warn2]);
         } else {
-            await sendBotMessages([
-                "😡😡😡"
-            ]);
+            await sendBotMessages([warn3]);
         }
-		
-        if (currentStep === 0) {
-            await sendBotMessages(["สรุปว่าคุณเป็นคนกลุ่มไหน พิมพ์เลข 1, 2 หรือ 3 มาใหม่นะ"]);
+        
+        if (currentStep === -1) {
+            await sendBotMessages(["พิมพ์ TH สำหรับภาษาไทย <br> Type EN for English"]);
+        } else if (currentStep === 0) {
+            let msg = currentLang === "EN" ? "Which group do you belong to? Type 1, 2, or 3." : "สรุปว่าคุณเป็นคนกลุ่มไหน พิมพ์เลข 1, 2 หรือ 3 มาใหม่นะ";
+            await sendBotMessages([msg]);
         } else if (currentStep === 1) {
-            await sendBotMessages(["พิมพ์ดี ๆ"]);
+            let msg = currentLang === "EN" ? "Please type nicely." : "พิมพ์ดี ๆ";
+            await sendBotMessages([msg]);
         } else if (currentStep === 1.5) {
-            await sendBotMessages([`พิมพ์แค่ "ใช่" เพื่อยืนยัน หรือพิมพ์แก้ความเห็นมาใหม่`]);
+            let msg = currentLang === "EN" ? `Just type "Yes" to confirm, or type your new feedback.` : `พิมพ์แค่ "ใช่" เพื่อยืนยัน หรือพิมพ์แก้ความเห็นมาใหม่`;
+            await sendBotMessages([msg]);
         }
-		
+        
         return;
     }
-	
-		profanityCount = 0;
-	
-    if (currentStep === 0) {
+    
+    profanityCount = 0;
+
+    if (currentStep === -1) {
+        const langInput = userInput.trim().toUpperCase();
+        if (langInput === "TH" || langInput === "EN") {
+            currentLang = langInput;
+            currentStep = 0;
+            
+            if (currentLang === "TH") {
+                await sendBotMessages([
+                    "สวัสดีจ้า ฉันคือน้อง Bot มาทำหน้าที่เก็บความคิดเห็น",
+                    "ตอนนี้สำนักทะเบียนกำลังจะทำ Bot เลยอยากฟังความคิดเห็นของคุณว่า อยากให้ Bot เป็นแบบไหน หรือช่วยทำอะไรได้บ้าง",
+                    "ก่อนอื่น คุณเป็นคนกลุ่มไหน พิมพ์เลขบอกหน่อยนะ",
+                    "พิมพ์ 1 นักศึกษาใหม่ (รหัส 69) <br> พิมพ์ 2 นักศึกษาปัจจุบัน <br> พิมพ์ 3 ศิษย์เก่า"
+                ]);
+            } else {
+                await sendBotMessages([
+                    "Hi there! I'm the REG Bot, here to collect your feedback.",
+                    "The Registrar's Office is planning to build a new Bot, and we'd love to hear your thoughts on what it should be like or how it can help you.",
+                    "First off, which group do you belong to? Just type the number.",
+                    "Type 1 for New Student (ID 69) <br> Type 2 for Current Student <br> Type 3 for Alumni"
+                ]);
+            }
+        } else {
+            await sendBotMessages([
+                "กรุณาพิมพ์ TH หรือ EN เท่านั้นจ้า / Please type TH or EN only."
+            ]);
+        }
+    }
+    else if (currentStep === 0) {
         if (userInput === "1" || userInput === "2" || userInput === "3") {
             let greeting1 = "";
             let greeting2 = "";
+            
             if (userInput === "1") {
                 surveyData.userType = "นักศึกษาใหม่ (รหัส 69)";
                 greeting1 = "Hi Hi!";
-                greeting2 = "ยินดีต้อนรับสู่รั้วธรรมศาสตร์นะ";
+                greeting2 = currentLang === "EN" ? "Welcome to Thammasat!" : "ยินดีต้อนรับสู่รั้วธรรมศาสตร์นะ";
             } else if (userInput === "2") {
                 surveyData.userType = "นักศึกษาปัจจุบัน";
                 greeting1 = "Hey bro!";
-                greeting2 = "สู้ๆ กับการเรียนนะ";
+                greeting2 = currentLang === "EN" ? "Keep fighting with your studies!" : "สู้ๆ กับการเรียนนะ";
             } else if (userInput === "3") {
                 surveyData.userType = "ศิษย์เก่า";
-                greeting1 = "อ๋อจ้า";
-                greeting2 = "คุณพี่";
+                greeting1 = currentLang === "EN" ? "Oh, I see!" : "อ๋อจ้า";
+                greeting2 = currentLang === "EN" ? "Senior!" : "คุณพี่";
             }
             currentStep = 1;
+
+            let questionMsg = currentLang === "EN" ? 
+                "Let's get straight to the point! If the Registrar's Office creates a REG Bot, what would you like it to help you with? Leave your ideas or questions right here!" : 
+                "เข้าเรื่องเลยนะ หากสำนักงานทะเบียนนักศึกษาจะทำ REG Bot คุณอยากให้ REG Bot ของเราช่วยอะไร ฝากความเห็น/คำถามไว้ได้เลยนะ";
+
             await sendBotMessages([
                 greeting1,
                 greeting2,
-                "เข้าเรื่องเลยนะ หากสำนักงานทะเบียนนักศึกษาจะทำ REG Bot คุณอยากให้ REG Bot ของเราช่วยอะไร ฝากความเห็น/คำถามไว้ได้เลยนะ"
+                questionMsg
             ]);
         } else {
-            await sendBotMessages([
-                "ขอเป็นตัวเลข 1, 2 หรือ 3 เท่านั้นจ้า ลองพิมพ์ใหม่นะ"
-            ]);
+            let errorMsg = currentLang === "EN" ? "Please type only the number 1, 2, or 3. Let's try again!" : "ขอเป็นตัวเลข 1, 2 หรือ 3 เท่านั้นจ้า ลองพิมพ์ใหม่นะ";
+            await sendBotMessages([errorMsg]);
         }
     } 
     else if (currentStep === 1) {
         if (userInput.length <= 8) {
-            await sendBotMessages([
-                "ความคิดเห็นสั้นไปนิดนึงน้า ช่วยอธิบายเพิ่มเติมอีกหน่อยได้ไหมจ๊ะ"
-            ]);
+            let shortMsg = currentLang === "EN" ? "Your feedback is a bit too short! Could you explain a little more for me?" : "ความคิดเห็นสั้นไปนิดนึงน้า ช่วยอธิบายเพิ่มเติมอีกหน่อยได้ไหมจ๊ะ";
+            await sendBotMessages([shortMsg]);
         } else {
             tempFeedback = userInput;
             currentStep = 1.5; 
-            await sendBotMessages([
-                `ขอทวนนะ ความคิดเห็นของคุณคือ "${tempFeedback}" ถูกไหมเอ่ย`,
-                `พิมพ์แค่ "ใช่" เพื่อยืนยัน หรือพิมพ์ข้อเสนอมาใหม่ได้เลยจ้า`
-            ]);
+            
+            let confirm1 = currentLang === "EN" ? `Let me double-check. Your feedback is: "${tempFeedback}", right?` : `ขอทวนนะ ความคิดเห็นของคุณคือ "${tempFeedback}" ถูกไหมเอ่ย`;
+            let confirm2 = currentLang === "EN" ? `Just type "Yes" to confirm, or type your new ideas here!` : `พิมพ์แค่ "ใช่" เพื่อยืนยัน หรือพิมพ์ข้อเสนอมาใหม่ได้เลยจ้า`;
+
+            await sendBotMessages([confirm1, confirm2]);
         }
     } 
     else if (currentStep === 1.5) {
-        const confirmText = userInput.trim(); 
+        const confirmText = userInput.trim().toUpperCase(); 
         
-        if (confirmText === "ใช่") {
+        const isConfirm = (currentLang === "TH" && confirmText === "ใช่") || (currentLang === "EN" && confirmText === "YES");
+
+        if (isConfirm) {
             surveyData.feedback = tempFeedback;
             currentStep = 2; 
             submitToGoogleForm(surveyData.userType, surveyData.feedback);
             localStorage.setItem("regAiLastSubmit", Date.now().toString());
-            await sendBotMessages([
-                "จดความคิดเห็นเรียบร้อย!",
-                `ความคิดเห็นของคุณคือ "${tempFeedback}"`,
-                "ต้องขอบคุณมาก ๆ นะ",
-                "ข้อมูลนี้จะเป็นประโยชน์ในการพัฒนา Bot ของเราจ้า",
-                "หากคุณอยากแสดงความเห็นเพิ่มเติม รอ 2 นาที แล้ว Refresh Chat ใหม่น้า"
-            ]);
+
+            let final1 = currentLang === "EN" ? "Feedback noted!" : "จดความคิดเห็นเรียบร้อย!";
+            let final2 = currentLang === "EN" ? `Your feedback is: "${tempFeedback}"` : `ความคิดเห็นของคุณคือ "${tempFeedback}"`;
+            let final3 = currentLang === "EN" ? "Thank you so much!" : "ต้องขอบคุณมาก ๆ นะ";
+            let final4 = currentLang === "EN" ? "This info will be super helpful in developing our Bot." : "ข้อมูลนี้จะเป็นประโยชน์ในการพัฒนา Bot ของเราจ้า";
+            let final5 = currentLang === "EN" ? "If you want to leave more comments, just wait 2 minutes and refresh the chat!" : "หากคุณอยากแสดงความเห็นเพิ่มเติม รอ 2 นาที แล้ว Refresh Chat ใหม่น้า";
+
+            await sendBotMessages([final1, final2, final3, final4, final5]);
+
             document.getElementById("user-input").disabled = true;
-            document.getElementById("user-input").placeholder = "จบการสนทนาแล้วจ้า";
+            document.getElementById("user-input").placeholder = currentLang === "EN" ? "Chat ended!" : "จบการสนทนาแล้วจ้า";
         } else {
             if (userInput.length <= 8) {
-                await sendBotMessages([
-                    `ถ้าต้องการยืนยันความเห็นเดิม พิมพ์แค่คำว่า "ใช่" คำเดียวนะจ๊ะ`,
-                    "แต่ถ้าตั้งใจจะแก้ความเห็นใหม่ ข้อความเมื่อกี้ยังสั้นไปนิดนึง รบกวนพิมพ์อธิบายเพิ่มให้อีกหน่อยจ้า"
-                ]);
+                let fail1 = currentLang === "EN" ? `If you want to confirm your previous feedback, just type the word "Yes".` : `ถ้าต้องการยืนยันความเห็นเดิม พิมพ์แค่คำว่า "ใช่" คำเดียวนะจ๊ะ`;
+                let fail2 = currentLang === "EN" ? "But if you meant to change your feedback, your previous message was a bit too short. Please type a little more to explain!" : "แต่ถ้าตั้งใจจะแก้ความเห็นใหม่ ข้อความเมื่อกี้ยังสั้นไปนิดนึง รบกวนพิมพ์อธิบายเพิ่มให้อีกหน่อยจ้า";
+                await sendBotMessages([fail1, fail2]);
             } else {
                 tempFeedback = userInput;
-                await sendBotMessages([
-                    `อัปเดตข้อมูลแล้วจ้า ขอทวนนะ ความคิดเห็นของคุณคือ "${tempFeedback}" ถูกไหมเอ่ย`,
-                    `พิมพ์แค่ "ใช่" คำเดียวเพื่อยืนยัน หรือพิมพ์แก้มาใหม่ได้เลยจ้า`
-                ]);
+                
+                let update1 = currentLang === "EN" ? `Data updated! Let me double-check. Your new feedback is: "${tempFeedback}", right?` : `อัปเดตข้อมูลแล้วจ้า ขอทวนนะ ความคิดเห็นของคุณคือ "${tempFeedback}" ถูกไหมเอ่ย`;
+                let update2 = currentLang === "EN" ? `Just type "Yes" to confirm, or type your new ideas here!` : `พิมพ์แค่ "ใช่" คำเดียวเพื่อยืนยัน หรือพิมพ์แก้มาใหม่ได้เลยจ้า`;
+                
+                await sendBotMessages([update1, update2]);
             }
         }
     }
